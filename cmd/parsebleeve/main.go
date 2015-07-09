@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 
 	"github.com/blevesearch/bleve"
 )
@@ -18,16 +19,19 @@ func hello(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	// mux := http.NewServeMux()
-	// mux.HandleFunc("/", hello)
-	// http.ListenAndServe(":8000", mux)
+	port := "8000"
+	if os.Getenv("PORT") != "" {
+		port = os.Getenv("PORT")
+	}
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", hello)
 	bleeveMain()
+	http.ListenAndServe(":"+port, mux)
 }
 
 func bleeveMain() {
-
 	// open a new index
-	index, err := bleve.Open("example.bleve")
+	index, err := bleve.Open("content.bleve")
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -38,6 +42,7 @@ func bleeveMain() {
 	}{
 		Name: "text",
 	}
+	index.Index("1", data)
 
 	// search for some text
 	query := bleve.NewMatchQuery("text")
