@@ -10,19 +10,11 @@ import (
 	"os"
 
 	"github.com/blevesearch/bleve"
-	"github.com/davecgh/go-spew/spew"
 )
 
-type index struct {
-	index bleve.Index
-}
-
-func hello(w http.ResponseWriter, r *http.Request) {
-	defer r.Body.Close()
-	var m map[string]interface{}
-	json.NewDecoder(r.Body).Decode(&m)
-	fmt.Println(m)
-	io.WriteString(w, `{"success" : true}`)
+type indexer struct {
+	index      bleve.Index
+	webhookKey string
 }
 
 func main() {
@@ -31,7 +23,7 @@ func main() {
 		port = os.Getenv("PORT")
 	}
 
-	i, err := NewIndex("content.bleve")
+	i, err := NewIndexer(os.Getenv("PARSE_WEBHOOK_KEY"))
 	if err != nil {
 		log.Fatalln("error creating index:", err)
 	}
@@ -54,7 +46,8 @@ type WebhookRequest struct {
 	TriggerName    string      `json:"triggerName,omitempty"`
 }
 
-func NewIndex(path string) (*index, error) {
+func NewIndexer(webhookKey string) (*indexer, error) {
+	path := "contents.bleve"
 	i, err := bleve.Open(path)
 	if err == bleve.ErrorIndexPathDoesNotExist {
 		im := bleve.NewIndexMapping()
@@ -62,34 +55,42 @@ func NewIndex(path string) (*index, error) {
 	} else if err != nil {
 		return nil, err
 	}
-	return &index{
-		index: i,
+	return &indexer{
+		index:      i,
+		webhookKey: webhookKey,
 	}, nil
 }
 
 func writeErr(w io.Writer, msg error) {
-	spew.Dump("writing err", msg)
 	err := json.NewEncoder(w).Encode(Response{Error: msg.Error()})
+	log.Println("wrote error:", err)
 	if err != nil {
 		log.Println("error encoding response:", err)
 	}
 }
 
-func (i *index) indexHandler(w http.ResponseWriter, r *http.Request) {
+func (i *indexer) indexHandler(w http.ResponseWriter, r *http.Request) {
 	body := WebhookRequest{}
-
 	buf := &bytes.Buffer{}
 	io.Copy(buf, r.Body)
 	defer r.Body.Close()
 	err := json.NewDecoder(buf).Decode(&body)
 	if err != nil {
 		writeErr(w, err)
+		return
 	}
+	if r.Header.Get("X-Parse-Webhook-Key") != i.webhookKey {
+		writeErr(w, fmt.Errorf("invalid webhook key"))
+		return
+	}
+	//TODO(tmc): guard these casts
 	obj := body.Object.(map[string]interface{})
 	err = i.index.Index(obj["objectId"].(string), obj)
 	if err != nil {
 		writeErr(w, err)
+		return
 	}
+	json.NewEncoder(os.Stdout).Encode(body)
 
 	err = json.NewEncoder(w).Encode(Response{
 		Success: true,
@@ -98,14 +99,13 @@ func (i *index) indexHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println("error writing response:", err)
 	}
 }
-func (i *index) searchHandler(w http.ResponseWriter, r *http.Request) {
+func (i *indexer) searchHandler(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
 		writeErr(w, err)
 		return
 	}
 	q := r.Form.Get("q")
-	spew.Dump(r)
 	if q == "" {
 		writeErr(w, fmt.Errorf("no term provided"))
 		return
