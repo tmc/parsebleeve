@@ -115,6 +115,7 @@ func (i *indexer) searchHandler(w http.ResponseWriter, r *http.Request) {
 	searchResults, err := i.index.Search(search)
 	if err != nil {
 		writeErr(w, err)
+		return
 	}
 	err = json.NewEncoder(w).Encode(Response{
 		Success: searchResults,
