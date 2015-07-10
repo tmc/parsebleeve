@@ -19,7 +19,7 @@
             "value": ""
     },
     "PARSE_CLASS_NAME": {
-            "description": "The Parse you would like to index.",
+            "description": "The Parse Class you would like to index.",
             "value": ""
     }
   }
