@@ -14,3 +14,14 @@ The easiest way to get started is by using the 'Deploy to Heroku' button above t
 
 You will be prompted for your Parse Application's keys and the Parse Class you would like to index.
 
+To auto-create the necessary triggers and webhook functions you must set the dyno url as an environment variable for your dyno.
+
+After your app deploys successfully configure the endpoint URL like so:
+
+* Manage App -> Settings -> Reveal Config Vars
+
+Add a new variabled named 'URL' and set its value to the URL for the dyno without a trailing slash.
+
+Example: 'https://nameless-eyrie-4619.herokuapp.com'
+
+The dyno will restart and register itsself with your Parse app.
