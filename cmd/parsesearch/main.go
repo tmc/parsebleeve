@@ -37,5 +37,6 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/search", i.Search)
 	mux.HandleFunc("/index", i.Index)
+	mux.HandleFunc("/unindex", i.Unindex)
 	http.ListenAndServe(":"+port, mux)
 }

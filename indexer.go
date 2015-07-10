@@ -39,28 +39,35 @@ func NewIndexer(webhookKey, masterKey, appID string) (*Indexer, error) {
 	}, nil
 }
 
-func (i *Indexer) Index(w http.ResponseWriter, r *http.Request) {
-	body := WebhookRequest{}
+func webhookRequest(r *http.Request, webhookKey string) (*WebhookRequest, error) {
+	req := &WebhookRequest{}
 	buf := &bytes.Buffer{}
 	io.Copy(buf, r.Body)
 	defer r.Body.Close()
-	err := json.NewDecoder(buf).Decode(&body)
+	err := json.NewDecoder(buf).Decode(&req)
+	if err != nil {
+		return nil, err
+	}
+	if r.Header.Get("X-Parse-Webhook-Key") != webhookKey {
+		return nil, fmt.Errorf("invalid webhook key")
+	}
+	return req, nil
+}
+
+func (i *Indexer) Index(w http.ResponseWriter, r *http.Request) {
+	req, err := webhookRequest(r, i.webhookKey)
 	if err != nil {
 		writeErr(w, err)
 		return
 	}
-	if r.Header.Get("X-Parse-Webhook-Key") != i.webhookKey {
-		writeErr(w, fmt.Errorf("invalid webhook key"))
-		return
-	}
 	//TODO(tmc): guard these casts
-	obj := body.Object.(map[string]interface{})
+	obj := req.Object.(map[string]interface{})
 	err = i.index.Index(obj["objectId"].(string), obj)
 	if err != nil {
 		writeErr(w, err)
 		return
 	}
-	json.NewEncoder(os.Stdout).Encode(body)
+	json.NewEncoder(os.Stdout).Encode(req)
 
 	err = json.NewEncoder(w).Encode(Response{
 		Success: true,
@@ -69,6 +76,30 @@ func (i *Indexer) Index(w http.ResponseWriter, r *http.Request) {
 		log.Println("error writing response:", err)
 	}
 }
+
+func (i *Indexer) Unindex(w http.ResponseWriter, r *http.Request) {
+	req, err := webhookRequest(r, i.webhookKey)
+	if err != nil {
+		writeErr(w, err)
+		return
+	}
+	//TODO(tmc): guard these casts
+	obj := req.Object.(map[string]interface{})
+	err = i.index.Delete(obj["objectId"].(string))
+	if err != nil {
+		writeErr(w, err)
+		return
+	}
+	json.NewEncoder(os.Stdout).Encode(req)
+
+	err = json.NewEncoder(w).Encode(Response{
+		Success: true,
+	})
+	if err != nil {
+		log.Println("error writing response:", err)
+	}
+}
+
 func (i *Indexer) Search(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {

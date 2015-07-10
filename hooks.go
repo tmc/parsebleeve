@@ -26,20 +26,26 @@ func (i *Indexer) RegisterHooks(prefix string, className string) error {
 	}
 	c = c.WithMasterKey(i.masterKey)
 
-	err = c.CreateHookFunction(&parse.HookFunction{
+	err = squelchAlreadyExists(c.CreateHookFunction(&parse.HookFunction{
 		FunctionName: prefix + "search",
 		URL:          os.Getenv("URL") + "/search",
-	})
-	err = squelchAlreadyExists(err)
+	}))
 	if err != nil {
 		return err
 	}
-	err = c.CreateTriggerFunction(&parse.TriggerFunction{
+	err = squelchAlreadyExists(c.CreateTriggerFunction(&parse.TriggerFunction{
 		ClassName:   className,
 		TriggerName: "afterSave",
 		URL:         os.Getenv("URL") + "/index",
-	})
-	err = squelchAlreadyExists(err)
+	}))
+	if err != nil {
+		return err
+	}
+	err = squelchAlreadyExists(c.CreateTriggerFunction(&parse.TriggerFunction{
+		ClassName:   className,
+		TriggerName: "afterDelete",
+		URL:         os.Getenv("URL") + "/unindex",
+	}))
 	if err != nil {
 		return err
 	}
