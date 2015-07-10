@@ -5,7 +5,7 @@ parsesearch
 
 This project shows example use of Cloud Code Webhooks to implement full text search for Parse objects.
 
-Actual use will involve modifications
+Actual use will likey involve customizations;
 
 Getting Started
 ---------------
@@ -25,3 +25,18 @@ Add a new variabled named 'URL' and set its value to the URL for the dyno withou
 Example: 'https://nameless-eyrie-4619.herokuapp.com'
 
 The dyno will restart and register itsself with your Parse app.
+
+Querying
+--------
+parsesearch installs a webhook called 'search'
+
+You can test a search by curling your Cloud Code Webhook like so:
+
+```sh
+$ curl -X POST https://${PARSE_APPLICATION_ID}:javascript-key:${PARSE_JAVASCRIPT_KEY}@api.parse.com/1/functions/search -d '{"q":"hello"}' 
+```
+
+How it works
+------------
+On startup parsesearch iterates over all the objects in your specified class and indexes them (their full JSON representation). It registers before and after save triggers to maintain the index.
+
