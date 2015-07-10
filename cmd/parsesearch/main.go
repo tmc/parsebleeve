@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -26,9 +27,9 @@ func main() {
 	if err != nil {
 		log.Fatalln("error creating Indexer:", err)
 	}
-	err = i.RegisterHooks("/test/", class)
+	err = i.RegisterHooks(os.Getenv("PARSE_HOOK_PREFIX"), class)
 	if err != nil {
-		log.Fatalln("error creating Indexer:", err)
+		fmt.Println("error creating hooks:", err)
 	}
 	if class != "" {
 		go i.Reindex(class)
