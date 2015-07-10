@@ -25,10 +25,10 @@ func (i *Indexer) RegisterHooks(prefix string, className string) error {
 		return err
 	}
 	c = c.WithMasterKey(i.masterKey)
-
+	urlPrefix := os.Getenv("URL")
 	err = squelchAlreadyExists(c.CreateHookFunction(&parse.HookFunction{
 		FunctionName: prefix + "search",
-		URL:          os.Getenv("URL") + "/search",
+		URL:          urlPrefix + "/search",
 	}))
 	if err != nil {
 		return err
@@ -36,7 +36,7 @@ func (i *Indexer) RegisterHooks(prefix string, className string) error {
 	err = squelchAlreadyExists(c.CreateTriggerFunction(&parse.TriggerFunction{
 		ClassName:   className,
 		TriggerName: "afterSave",
-		URL:         os.Getenv("URL") + "/index",
+		URL:         urlPrefix + "/index",
 	}))
 	if err != nil {
 		return err
@@ -44,10 +44,7 @@ func (i *Indexer) RegisterHooks(prefix string, className string) error {
 	err = squelchAlreadyExists(c.CreateTriggerFunction(&parse.TriggerFunction{
 		ClassName:   className,
 		TriggerName: "afterDelete",
-		URL:         os.Getenv("URL") + "/unindex",
+		URL:         urlPrefix + "/unindex",
 	}))
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
