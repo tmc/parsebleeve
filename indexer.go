@@ -12,12 +12,16 @@ import (
 	"github.com/blevesearch/bleve"
 )
 
-type indexer struct {
-	index      bleve.Index
+type Indexer struct {
+	index bleve.Index
+
+	// Parse Keys
 	webhookKey string
+	masterKey  string
+	appID      string
 }
 
-func NewIndexer(webhookKey string) (*indexer, error) {
+func NewIndexer(webhookKey, masterKey, appID string) (*Indexer, error) {
 	path := "contents.bleve"
 	i, err := bleve.Open(path)
 	if err == bleve.ErrorIndexPathDoesNotExist {
@@ -26,13 +30,15 @@ func NewIndexer(webhookKey string) (*indexer, error) {
 	} else if err != nil {
 		return nil, err
 	}
-	return &indexer{
+	return &Indexer{
 		index:      i,
 		webhookKey: webhookKey,
+		masterKey:  masterKey,
+		appID:      appID,
 	}, nil
 }
 
-func (i *indexer) Index(w http.ResponseWriter, r *http.Request) {
+func (i *Indexer) Index(w http.ResponseWriter, r *http.Request) {
 	body := WebhookRequest{}
 	buf := &bytes.Buffer{}
 	io.Copy(buf, r.Body)
@@ -62,7 +68,7 @@ func (i *indexer) Index(w http.ResponseWriter, r *http.Request) {
 		log.Println("error writing response:", err)
 	}
 }
-func (i *indexer) Search(w http.ResponseWriter, r *http.Request) {
+func (i *Indexer) Search(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
 		writeErr(w, err)
