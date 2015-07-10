@@ -17,6 +17,7 @@ func main() {
 		whkey = os.Getenv("PARSE_WEBHOOK_KEY")
 		mkey  = os.Getenv("PARSE_MASTER_KEY")
 		appid = os.Getenv("PARSE_APPLICATION_ID")
+		class = os.Getenv("PARSE_CLASS_NAME")
 	)
 	if whkey == "" || mkey == "" || appid == "" {
 		log.Fatalln("Must provide PARSE_WEBHOOK_KEY, PARSE_MASTER_KEY, and PARSE_APPLICATION_ID")
@@ -25,9 +26,12 @@ func main() {
 	if err != nil {
 		log.Fatalln("error creating Indexer:", err)
 	}
-	err = i.RegisterHooks("/test/")
+	err = i.RegisterHooks("/test/", class)
 	if err != nil {
 		log.Fatalln("error creating Indexer:", err)
+	}
+	if class != "" {
+		go i.Reindex(class)
 	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/search", i.Search)

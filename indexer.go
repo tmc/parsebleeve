@@ -10,6 +10,7 @@ import (
 	"os"
 
 	"github.com/blevesearch/bleve"
+	"github.com/sheki/parseiter"
 )
 
 type Indexer struct {
@@ -91,5 +92,24 @@ func (i *Indexer) Search(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		log.Println("error encoding response:", err)
+	}
+}
+
+// fetches all objects and inedexes them again. long running
+func (i *Indexer) Reindex(class string) {
+	iter, err := parseiter.New(i.appID, i.masterKey, class)
+	if err != nil {
+		//TODO(sheki) fix
+		log.Println(err)
+	}
+	for {
+		o, ok := iter.Next()
+		if err != nil {
+			log.Println("error fetching object from parse", err)
+		}
+		obj := o.(map[string]interface{})
+		if err := i.index.Index(obj["objectId"].(string), obj); err != nil {
+			log.Println("error index", err)
+		}
 	}
 }
