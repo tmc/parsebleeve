@@ -5,6 +5,18 @@
     "PARSE_WEBHOOK_KEY": {
             "description": "Your Parse Cloud Code Webhook Key",
             "value": ""
+    },
+    "PARSE_REST_API_KEY": {
+            "description": "Your REST API Key",
+            "value": ""
+    },
+    "PARSE_MASTER_KEY": {
+            "description": "Your Master Key (used to fetch schema and Cloud Code functions).",
+            "value": ""
+    },
+    "PARSE_CLASS_NAME": {
+            "description": "The Parse you would like to index.",
+            "value": ""
     }
   }
 }
