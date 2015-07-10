@@ -104,6 +104,9 @@ func (i *Indexer) Reindex(class string) {
 	}
 	for {
 		o, ok := iter.Next()
+		if !ok {
+			return
+		}
 		if err != nil {
 			log.Println("error fetching object from parse", err)
 		}
