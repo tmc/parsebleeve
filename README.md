@@ -5,7 +5,7 @@ parsesearch
 
 This project shows example use of Cloud Code Webhooks to implement full text search for Parse objects.
 
-Actual use will likey involve customizations;
+Actual use will likey involve customizations.
 
 Getting Started
 ---------------
