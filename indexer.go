@@ -101,13 +101,18 @@ func (i *Indexer) Unindex(w http.ResponseWriter, r *http.Request) {
 }
 
 func (i *Indexer) Search(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseForm()
+	req, err := webhookRequest(r, i.webhookKey)
 	if err != nil {
 		writeErr(w, err)
 		return
 	}
-	q := r.Form.Get("q")
-	if q == "" {
+	rawq := req.Params["q"]
+	if rawq == nil {
+		writeErr(w, fmt.Errorf("no term provided"))
+		return
+	}
+	q, ok := rawq.(string)
+	if q == "" || !ok {
 		writeErr(w, fmt.Errorf("no term provided"))
 		return
 	}
@@ -118,8 +123,12 @@ func (i *Indexer) Search(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, err)
 		return
 	}
+	ids := []string{}
+	for _, h := range searchResults.Hits {
+		ids = append(ids, h.ID)
+	}
 	err = json.NewEncoder(w).Encode(Response{
-		Success: searchResults,
+		Success: ids,
 	})
 	if err != nil {
 		log.Println("error encoding response:", err)

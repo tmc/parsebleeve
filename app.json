@@ -2,6 +2,10 @@
   "name": "Parse Search Server",
   "description": "A search indexing service for parse",
   "env": {
+    "PARSE_APPLICATION_ID": {
+            "description": "Your Parse Application ID",
+            "value": ""
+    },
     "PARSE_WEBHOOK_KEY": {
             "description": "Your Parse Cloud Code Webhook Key",
             "value": ""
