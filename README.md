@@ -24,7 +24,7 @@ Add a new variabled named 'URL' and set its value to the URL for the dyno withou
 
 Example: 'https://nameless-eyrie-4619.herokuapp.com'
 
-The dyno will restart and register itsself with your Parse app.
+The dyno will restart and register itsself with your Parse app. You can confirm this by looking at your Webhooks page in the Parse web interface.
 
 Querying
 --------
