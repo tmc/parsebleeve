@@ -34,6 +34,7 @@ You can test a search by curling your Cloud Code Webhook like so:
 
 ```sh
 $ curl -X POST https://${PARSE_APPLICATION_ID}:javascript-key:${PARSE_JAVASCRIPT_KEY}@api.parse.com/1/functions/search -d '{"q":"hello"}' 
+{"result":["gKCRJ0tzgA","yWpBOZj4UB"]}
 ```
 
 How it works
