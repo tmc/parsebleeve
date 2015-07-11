@@ -38,5 +38,5 @@ $ curl -X POST https://${PARSE_APPLICATION_ID}:javascript-key:${PARSE_JAVASCRIPT
 
 How it works
 ------------
-On startup parsesearch iterates over all the objects in your specified class and indexes them (their full JSON representation). It registers before and after save triggers to maintain the index.
+On startup parsesearch iterates over all the objects in your specified class and indexes them (their full JSON representation). It registers an afterSave and afterDelete triggers to maintain the index.
 
