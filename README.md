@@ -20,9 +20,9 @@ After your app deploys successfully configure the endpoint URL like so:
 
 * Manage App -> Settings -> Reveal Config Vars
 
-Add a new environment variable named 'URL' and set its value to the URL of the Heroku dyno without a trailing slash.
+Add a new environment variable named 'URL' and set its value to the URL of the Heroku dyno *without a trailing slash*. If you set this to the incorrect value at first remove the webhooks in the Parse web interface and restart your dyno.
 
-Example: 'https://nameless-eyrie-4619.herokuapp.com'
+For example, you would set it to a string of the form 'https://DYNO_NAME_HERE.herokuapp.com'
 
 The dyno will restart and register itsself with your Parse app. You can confirm this by looking at your Webhooks page in the Parse web interface.
 
