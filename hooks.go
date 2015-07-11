@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path"
 	"strings"
 
 	"github.com/tmc/parse"
@@ -17,6 +16,13 @@ func squelchAlreadyExists(err error) error {
 		}
 	}
 	return err
+}
+
+func pathJoin(a, b string) string {
+	if !strings.HasSuffix(a, "/") {
+		a = a + "/"
+	}
+	return a + b
 }
 
 // RegisterHooks auto-registers the search service with a Parse Application.
@@ -33,7 +39,7 @@ func (i *Indexer) RegisterHooks(className string) error {
 	}
 	err = squelchAlreadyExists(c.CreateHookFunction(&parse.HookFunction{
 		FunctionName: "search",
-		URL:          path.Join(urlPrefix, "search"),
+		URL:          pathJoin(urlPrefix, "search"),
 	}))
 	if err != nil {
 		return err
@@ -41,7 +47,7 @@ func (i *Indexer) RegisterHooks(className string) error {
 	err = squelchAlreadyExists(c.CreateTriggerFunction(&parse.TriggerFunction{
 		ClassName:   className,
 		TriggerName: "afterSave",
-		URL:         path.Join(urlPrefix, "index"),
+		URL:         pathJoin(urlPrefix, "index"),
 	}))
 	if err != nil {
 		return err
@@ -49,7 +55,7 @@ func (i *Indexer) RegisterHooks(className string) error {
 	err = squelchAlreadyExists(c.CreateTriggerFunction(&parse.TriggerFunction{
 		ClassName:   className,
 		TriggerName: "afterDelete",
-		URL:         path.Join(urlPrefix, "unindex"),
+		URL:         pathJoin(urlPrefix, "unindex"),
 	}))
 	return err
 }
