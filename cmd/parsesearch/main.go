@@ -9,21 +9,27 @@ import (
 	"github.com/sheki/parsesearch"
 )
 
+var parseKeys = []string{"PARSE_APPLICATION_ID", "PARSE_CLASS_NAME", "PARSE_JAVASCRIPT_KEY", "PARSE_MASTER_KEY", "PARSE_WEBHOOK_KEY"}
+
 func main() {
-	var (
-		port      = os.Getenv("PORT")
-		whkey     = os.Getenv("PARSE_WEBHOOK_KEY")
-		mkey      = os.Getenv("PARSE_MASTER_KEY")
-		appid     = os.Getenv("PARSE_APPLICATION_ID")
-		className = os.Getenv("PARSE_CLASS_NAME")
-	)
-	if whkey == "" || mkey == "" || appid == "" || className == "" {
-		log.Fatalln("Must provide PARSE_WEBHOOK_KEY, PARSE_MASTER_KEY, PARSE_APPLICATION_ID, and PARSE_CLASS_NAME")
-	}
+	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8000"
 	}
-	i, err := parsesearch.NewIndexer(whkey, mkey, appid)
+	keys := map[string]string{}
+	for _, key := range parseKeys {
+		val := os.Getenv(key)
+		if val == "" {
+			log.Fatalln("Must provide", key)
+		}
+		keys[key] = val
+	}
+	appID := keys["PARSE_APPLICATION_ID"]
+	whkey := keys["PARSE_WEBHOOK_KEY"]
+	mkey := keys["PARSE_MASTER_KEY"]
+	jskey := keys["PARSE_JAVASCRIPT_KEY"]
+	className := keys["PARSE_CLASS_NAME"]
+	i, err := parsesearch.NewIndexer(whkey, mkey, appID)
 	if err != nil {
 		log.Fatalln("error creating Indexer:", err)
 	}
@@ -37,5 +43,10 @@ func main() {
 	mux.HandleFunc("/index", i.Index)
 	mux.HandleFunc("/unindex", i.Unindex)
 	mux.HandleFunc("/status", i.IndexStatus)
+	if ui, err := parsesearch.NewUI(appID, jskey, className); err == nil {
+		mux.Handle("/", ui)
+	} else {
+		fmt.Println("error constructing ui:", err)
+	}
 	http.ListenAndServe(":"+port, mux)
 }

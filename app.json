@@ -6,6 +6,10 @@
             "description": "Your Parse Application ID",
             "value": ""
     },
+    "PARSE_JAVASCRIPT_KEY": {
+            "description": "Your Parse Javascript Key",
+            "value": ""
+    },
     "PARSE_WEBHOOK_KEY": {
             "description": "Your Parse Cloud Code Webhook Key",
             "value": ""
