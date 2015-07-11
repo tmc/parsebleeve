@@ -10,30 +10,27 @@ import (
 )
 
 func main() {
-	port := "8000"
-	if os.Getenv("PORT") != "" {
-		port = os.Getenv("PORT")
-	}
 	var (
-		whkey = os.Getenv("PARSE_WEBHOOK_KEY")
-		mkey  = os.Getenv("PARSE_MASTER_KEY")
-		appid = os.Getenv("PARSE_APPLICATION_ID")
-		class = os.Getenv("PARSE_CLASS_NAME")
+		port      = os.Getenv("PORT")
+		whkey     = os.Getenv("PARSE_WEBHOOK_KEY")
+		mkey      = os.Getenv("PARSE_MASTER_KEY")
+		appid     = os.Getenv("PARSE_APPLICATION_ID")
+		className = os.Getenv("PARSE_CLASS_NAME")
 	)
-	if whkey == "" || mkey == "" || appid == "" {
-		log.Fatalln("Must provide PARSE_WEBHOOK_KEY, PARSE_MASTER_KEY, and PARSE_APPLICATION_ID")
+	if whkey == "" || mkey == "" || appid == "" || className == "" {
+		log.Fatalln("Must provide PARSE_WEBHOOK_KEY, PARSE_MASTER_KEY, PARSE_APPLICATION_ID, and PARSE_CLASS_NAME")
+	}
+	if port == "" {
+		port = "8000"
 	}
 	i, err := parsesearch.NewIndexer(whkey, mkey, appid)
 	if err != nil {
 		log.Fatalln("error creating Indexer:", err)
 	}
-	err = i.RegisterHooks(os.Getenv("PARSE_HOOK_PREFIX"), class)
-	if err != nil {
+	if err = i.RegisterHooks(className); err != nil {
 		fmt.Println("error creating hooks:", err)
 	}
-	if class != "" {
-		go i.Reindex(class)
-	}
+	go i.Reindex(className)
 	mux := http.NewServeMux()
 	mux.HandleFunc("/search", i.Search)
 	mux.HandleFunc("/index", i.Index)

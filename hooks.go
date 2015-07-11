@@ -18,7 +18,7 @@ func squelchAlreadyExists(err error) error {
 }
 
 // RegisterHooks auto-registers the search service with a Parse Application.
-func (i *Indexer) RegisterHooks(prefix string, className string) error {
+func (i *Indexer) RegisterHooks(className string) error {
 	c, err := parse.NewClient(i.appID, "")
 	c.TraceOn(log.New(os.Stderr, "[parse api] ", log.LstdFlags))
 	if err != nil {
@@ -27,7 +27,7 @@ func (i *Indexer) RegisterHooks(prefix string, className string) error {
 	c = c.WithMasterKey(i.masterKey)
 	urlPrefix := os.Getenv("URL")
 	err = squelchAlreadyExists(c.CreateHookFunction(&parse.HookFunction{
-		FunctionName: prefix + "search",
+		FunctionName: "search",
 		URL:          urlPrefix + "/search",
 	}))
 	if err != nil {
