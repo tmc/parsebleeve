@@ -10,7 +10,7 @@ Actual use will likey involve customizations.
 Getting Started
 ---------------
 
-The easiest way to get started is by using the 'Deploy to Heroku' button above to start running this project in a new heroku dyno.
+The easiest way to get started is by using the 'Deploy to Heroku' button above to start running this project in a new Heroku dyno.
 
 You will be prompted for your Parse Application's keys and the Parse Class you would like to index.
 
@@ -20,7 +20,7 @@ After your app deploys successfully configure the endpoint URL like so:
 
 * Manage App -> Settings -> Reveal Config Vars
 
-Add a new variabled named 'URL' and set its value to the URL for the dyno without a trailing slash.
+Add a new environment variable named 'URL' and set its value to the URL of the Heroku dyno without a trailing slash.
 
 Example: 'https://nameless-eyrie-4619.herokuapp.com'
 
