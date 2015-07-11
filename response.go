@@ -6,6 +6,7 @@ import (
 	"log"
 )
 
+// Response is a Parse Cloud Code Webhook response
 type Response struct {
 	Error   interface{} `json:"error,omitempty"`
 	Success interface{} `json:"success,omitempty"`

@@ -1,10 +1,8 @@
 package parsesearch
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"os"
@@ -13,15 +11,17 @@ import (
 	"github.com/tmc/parse"
 )
 
+// Indexer manages the search index for a Parse app.
 type Indexer struct {
 	index bleve.Index
 
-	// Parse Keys
+	// Parse app keys/appID
 	webhookKey string
 	masterKey  string
 	appID      string
 }
 
+// NewIndexer prepares a new Indexer given the necessary Parse App credentials.
 func NewIndexer(webhookKey, masterKey, appID string) (*Indexer, error) {
 	path := "contents.bleve"
 	i, err := bleve.Open(path)
@@ -39,21 +39,9 @@ func NewIndexer(webhookKey, masterKey, appID string) (*Indexer, error) {
 	}, nil
 }
 
-func webhookRequest(r *http.Request, webhookKey string) (*WebhookRequest, error) {
-	req := &WebhookRequest{}
-	buf := &bytes.Buffer{}
-	io.Copy(buf, r.Body)
-	defer r.Body.Close()
-	err := json.NewDecoder(buf).Decode(&req)
-	if err != nil {
-		return nil, err
-	}
-	if r.Header.Get("X-Parse-Webhook-Key") != webhookKey {
-		return nil, fmt.Errorf("invalid webhook key")
-	}
-	return req, nil
-}
-
+// Index is an http.HandlerFunc that accepts a parse afterSave webhook request.
+//
+// It adds or updates the provided objet in the search index.
 func (i *Indexer) Index(w http.ResponseWriter, r *http.Request) {
 	req, err := webhookRequest(r, i.webhookKey)
 	if err != nil {
@@ -77,6 +65,9 @@ func (i *Indexer) Index(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Unindex is an http.HandlerFunc that accepts a parse afterDelete webhook request.
+//
+// It removes the provided object from the index.
 func (i *Indexer) Unindex(w http.ResponseWriter, r *http.Request) {
 	req, err := webhookRequest(r, i.webhookKey)
 	if err != nil {
@@ -100,6 +91,9 @@ func (i *Indexer) Unindex(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Search is an http.HandlerFunc that accepts a Parse Cloud Code Webhook request.
+//
+// The expected query parameter is 'q'
 func (i *Indexer) Search(w http.ResponseWriter, r *http.Request) {
 	req, err := webhookRequest(r, i.webhookKey)
 	if err != nil {
@@ -135,8 +129,10 @@ func (i *Indexer) Search(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// fetches all objects and inedexes them again. long running
+// Reindex fetches all objects for a class and indexes them.
+// Could be long-running.
 func (i *Indexer) Reindex(className string) error {
+	//TODO(tmc): add counters/progress reporting
 	client, err := parse.NewClient(i.appID, "")
 	if err != nil {
 		return err
