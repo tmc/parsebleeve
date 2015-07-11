@@ -35,5 +35,10 @@ func main() {
 	mux.HandleFunc("/search", i.Search)
 	mux.HandleFunc("/index", i.Index)
 	mux.HandleFunc("/unindex", i.Unindex)
+	if ui, err := parsesearch.NewUI(appid, "JAVSCRIPT KEY", className); err == nil {
+		mux.Handle("/", ui)
+	} else {
+		fmt.Println("error constructing ui:", err)
+	}
 	http.ListenAndServe(":"+port, mux)
 }
