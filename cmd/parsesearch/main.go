@@ -30,10 +30,12 @@ func main() {
 	if err = i.RegisterHooks(className); err != nil {
 		fmt.Println("error creating hooks:", err)
 	}
+	fmt.Println("start reindex job")
 	go i.Reindex(className)
 	mux := http.NewServeMux()
 	mux.HandleFunc("/search", i.Search)
 	mux.HandleFunc("/index", i.Index)
 	mux.HandleFunc("/unindex", i.Unindex)
+	mux.HandleFunc("/status", i.IndexStatus)
 	http.ListenAndServe(":"+port, mux)
 }

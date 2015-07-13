@@ -1,11 +1,16 @@
 package parsesearch
 
 import (
+	"container/list"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
+	"reflect"
+	"sync"
+	"sync/atomic"
 
 	"github.com/blevesearch/bleve"
 	"github.com/tmc/parse"
@@ -19,6 +24,7 @@ type Indexer struct {
 	webhookKey string
 	masterKey  string
 	appID      string
+	status     *indexStatusList
 }
 
 // NewIndexer prepares a new Indexer given the necessary Parse App credentials.
@@ -36,6 +42,7 @@ func NewIndexer(webhookKey, masterKey, appID string) (*Indexer, error) {
 		webhookKey: webhookKey,
 		masterKey:  masterKey,
 		appID:      appID,
+		status:     &indexStatusList{},
 	}, nil
 }
 
@@ -143,11 +150,76 @@ func (i *Indexer) Reindex(className string) error {
 	if err != nil {
 		return err
 	}
+	status := &indexStatus{class: className}
+
+	i.status.register(status)
+	defer i.status.unregister(status)
+
 	for o := iter.Next(); o != nil; o = iter.Next() {
 		obj := o.(map[string]interface{})
 		if err := i.index.Index(obj["objectId"].(string), obj); err != nil {
 			log.Println("index error:", err)
 		}
+
+		log.Println("index incremented")
+		status.incr()
 	}
 	return iter.Err()
+}
+
+// IndexStatus lists the status of all current Reindexing processes.
+func (i *Indexer) IndexStatus(w http.ResponseWriter, r *http.Request) {
+	i.status.writeIndexStatus(w)
+}
+
+type indexStatus struct {
+	class string
+	count uint32
+}
+
+func (i *indexStatus) incr() {
+	atomic.AddUint32(&i.count, 1)
+}
+
+func (i *indexStatus) String() string {
+	return fmt.Sprintf("indexed %d objects for class %s", i.count, i.class)
+}
+
+type indexStatusList struct {
+	inProgress *list.List
+	lock       sync.Mutex
+	once       sync.Once
+}
+
+func (i *indexStatusList) register(status *indexStatus) {
+	i.once.Do(func() {
+		i.inProgress = list.New()
+	})
+	i.lock.Lock()
+	defer i.lock.Unlock()
+	i.inProgress.PushBack(status)
+}
+
+func (i *indexStatusList) unregister(status *indexStatus) {
+	i.lock.Lock()
+	defer i.lock.Unlock()
+	var found *list.Element
+	for e := i.inProgress.Front(); e != nil; e = e.Next() {
+		if reflect.DeepEqual(e.Value, status) {
+			found = e
+			break
+		}
+	}
+	if found != nil {
+		i.inProgress.Remove(found)
+	}
+}
+
+func (i *indexStatusList) writeIndexStatus(w io.Writer) {
+	i.lock.Lock()
+	defer i.lock.Unlock()
+	for e := i.inProgress.Front(); e != nil; e = e.Next() {
+		m := e.Value.(*indexStatus).String()
+		fmt.Fprintf(w, "%s\n", m)
+	}
 }
