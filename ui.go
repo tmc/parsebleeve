@@ -4,10 +4,9 @@ import (
 	"bytes"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 
-	"text/template"
+	"html/template"
 
 	"github.com/sheki/parsesearch/static"
 )
@@ -27,33 +26,29 @@ func NewUI(appID, javascriptKey, className string) (*UI, error) {
 }
 
 func (ui *UI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	contents, err := static.Asset(r.URL.Path)
+	if r.URL.Path == "/" {
+		r.URL.Path = "/index.html"
+	}
+	contents, err := static.Asset(r.URL.Path[1:])
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte("Not found."))
 		return
 	}
-	rendered, err := ui.render(bytes.NewReader(contents))
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		log.Println("error rendering template:", err)
-		return
+	if err := ui.render(bytes.NewReader(contents), w); err != nil {
+		// assume the file is binary and return it verbatim
+		io.Copy(w, bytes.NewReader(contents))
 	}
-	io.Copy(w, rendered)
 }
 
-func (ui *UI) render(r io.Reader) (io.Reader, error) {
+func (ui *UI) render(r io.Reader, w io.Writer) error {
 	content, err := ioutil.ReadAll(r)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	tmpl, err := template.New("").Parse(string(content))
 	if err != nil {
-		return nil, err
+		return err
 	}
-	output := new(bytes.Buffer)
-	if err := tmpl.Execute(output, ui); err != nil {
-		return nil, err
-	}
-	return output, nil
+	return tmpl.Execute(w, ui)
 }
