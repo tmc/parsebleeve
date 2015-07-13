@@ -6,10 +6,9 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"net/http/httptest"
 
-	"github.com/alecthomas/template"
-	"github.com/elazarl/go-bindata-assetfs"
+	"text/template"
+
 	"github.com/sheki/parsesearch/static"
 )
 
@@ -17,8 +16,6 @@ type UI struct {
 	ClassName     string
 	JavascriptKey string
 	AppID         string
-
-	http.Handler
 }
 
 func NewUI(appID, javascriptKey, className string) (*UI, error) {
@@ -26,21 +23,22 @@ func NewUI(appID, javascriptKey, className string) (*UI, error) {
 		AppID:         appID,
 		JavascriptKey: javascriptKey,
 		ClassName:     className,
-		Handler: http.FileServer(&assetfs.AssetFS{
-			Asset: static.Asset, AssetDir: static.AssetDir}),
 	}, nil
 }
 
 func (ui *UI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	rec := httptest.NewRecorder()
-	ui.Handler.ServeHTTP(rec, r)
-	rendered, err := ui.render(rec.Body)
+	contents, err := static.Asset(r.URL.Path)
 	if err != nil {
-		log.Println("error rendering template:", err)
-		io.Copy(w, rec.Body)
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte("Not found."))
 		return
 	}
-	w.WriteHeader(rec.Code)
+	rendered, err := ui.render(bytes.NewReader(contents))
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Println("error rendering template:", err)
+		return
+	}
 	io.Copy(w, rendered)
 }
 
