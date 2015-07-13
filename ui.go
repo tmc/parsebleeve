@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"html/template"
+	"text/template"
 
 	"github.com/sheki/parsesearch/static"
 )
