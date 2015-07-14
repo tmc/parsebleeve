@@ -111,11 +111,9 @@
 	      if (this.to) {
 	        clearTimeout(this.to);
 	      }
-	      if (!event || !event.target) {
-	        return;
-	      }
+	      var params = { q: event.target.value };
 	      this.to = setTimeout(function () {
-	        Parse.Cloud.run('search', { q: event.target.value }).then(function (ids) {
+	        Parse.Cloud.run('search', params).then(function (ids) {
 	          _this.setState({ ids: ids, error: null });
 	        }, function (error) {
 	          _this.setState({ error: error, ids: [] });

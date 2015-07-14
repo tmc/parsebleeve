@@ -117,7 +117,7 @@ func (i *Indexer) Search(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, fmt.Errorf("no term provided"))
 		return
 	}
-	query := bleve.NewMatchQuery(q)
+	query := bleve.NewQueryStringQuery(q)
 	search := bleve.NewSearchRequest(query)
 	searchResults, err := i.index.Search(search)
 	if err != nil {

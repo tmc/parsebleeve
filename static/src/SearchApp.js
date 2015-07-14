@@ -10,9 +10,9 @@ export default class SearchApp extends Component {
   }
   _onInputChange(event) {
     if (this.to) { clearTimeout(this.to); }
-    if (!event || !event.target) { return; }
+    var params = {q: event.target.value};
     this.to = setTimeout(() => {
-      Parse.Cloud.run("search", {q: event.target.value}).then(
+      Parse.Cloud.run("search", params).then(
         (ids) => {
           this.setState({ids: ids, error: null});
         },
