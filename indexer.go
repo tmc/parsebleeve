@@ -13,6 +13,7 @@ import (
 	"sync/atomic"
 
 	"github.com/blevesearch/bleve"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/tmc/parse"
 )
 
@@ -124,6 +125,7 @@ func (i *Indexer) Search(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, err)
 		return
 	}
+	spew.Dump(searchResults)
 	ids := []string{}
 	for _, h := range searchResults.Hits {
 		ids = append(ids, h.ID)
@@ -146,7 +148,7 @@ func (i *Indexer) Reindex(className string) error {
 	}
 	client.TraceOn(log.New(os.Stderr, "[parse api] ", log.LstdFlags))
 	client = client.WithMasterKey(i.masterKey)
-	iter, err := client.NewScanner(className, "{}")
+	iter, err := client.NewQueryIter(className, "{}")
 	if err != nil {
 		return err
 	}
